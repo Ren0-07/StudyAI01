@@ -126,12 +126,66 @@ export function TaskModal({ isOpen, onClose, editingTaskId }: TaskModalProps) {
     }
   }, [isOpen, editingTaskId, getTaskById])
 
-  const handleSubmit = () => {
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || [])
+    if (files.length === 0) return
+
+    setUploading(true)
+    const newFiles = [...attachedFiles]
+
+    for (const file of files) {
+      try {
+        // Add progress tracker
+        setUploadProgress((prev) => [...prev, { fileName: file.name, progress: 0 }])
+
+        const { path, error } = await storageService.uploadFile(
+          file,
+          `materials/temp`
+        )
+
+        if (error) throw new Error(error)
+
+        // Create material object
+        const material = {
+          id: crypto.randomUUID(),
+          title: file.name,
+          fileName: file.name,
+          fileSize: file.size,
+          type: storageService.getFileType(file.name),
+          filePath: path,
+          taskIds: [],
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        }
+
+        newFiles.push(material)
+
+        // Update progress
+        setUploadProgress((prev) =>
+          prev.map((p) => (p.fileName === file.name ? { ...p, progress: 100 } : p))
+        )
+      } catch (error) {
+        console.error(`Failed to upload ${file.name}:`, error)
+      }
+    }
+
+    setAttachedFiles(newFiles)
+    setUploading(false)
+    setUploadProgress([])
+    if (fileInputRef.current) fileInputRef.current.value = ''
+  }
+
+  const handleRemoveFile = (fileId: string) => {
+    setAttachedFiles(attachedFiles.filter((f) => f.id !== fileId))
+  }
+
+  const handleSubmit = async () => {
     if (!formData.title.trim()) return
 
     const taskData = {
       title: formData.title.trim(),
       description: formData.description.trim() || undefined,
+      notes: formData.notes.trim() || undefined,
       completed: false,
       priority: formData.priority,
       difficulty: formData.difficulty,
@@ -143,6 +197,8 @@ export function TaskModal({ isOpen, onClose, editingTaskId }: TaskModalProps) {
       progress: 0
     }
 
+    let taskId = editingTaskId
+
     if (editingTaskId) {
       const existingTask = getTaskById(editingTaskId)
       if (existingTask) {
@@ -152,7 +208,36 @@ export function TaskModal({ isOpen, onClose, editingTaskId }: TaskModalProps) {
         })
       }
     } else {
-      addTask(taskData)
+      taskId = addTask(taskData)
+    }
+
+    // Add attached materials to task
+    if (taskId && attachedFiles.length > 0) {
+      for (const file of attachedFiles) {
+        const material = {
+          ...file,
+          taskIds: [taskId],
+          filePath: file.filePath,
+        }
+        addMaterial(material)
+      }
+    }
+
+    // Create schedule event if requested
+    if (scheduleEvent && taskId && eventStartTime) {
+      const startTime = new Date(eventStartTime)
+      const endTime = new Date(startTime.getTime() + eventDuration * 60 * 1000)
+
+      addScheduleEvent({
+        title: formData.title.trim(),
+        description: formData.description.trim() || undefined,
+        startTime: startTime.toISOString(),
+        endTime: endTime.toISOString(),
+        type: 'task',
+        taskId: taskId,
+        color: '#3b82f6',
+        status: 'scheduled',
+      })
     }
 
     onClose()
