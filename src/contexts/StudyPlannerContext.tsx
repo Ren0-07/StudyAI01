@@ -143,12 +143,15 @@ export interface AppSettings {
     pomodoroLength: number
     breakLength: number
     autoStartBreaks: boolean
+    autoAdvanceEnabled?: boolean // NEW: Enable auto-start of next session
   }
   notifications: {
     studyReminders: boolean
     taskDeadlines: boolean
     achievements: boolean
     weeklyReport: boolean
+    notificationsEnabled?: boolean // NEW: Enable browser notifications
+    notificationSound?: boolean // NEW: Play sound with notifications
   }
 }
 
