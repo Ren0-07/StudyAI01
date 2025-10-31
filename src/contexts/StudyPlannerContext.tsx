@@ -239,16 +239,24 @@ const initialState: StudyPlannerState = {
       dailyGoal: 4,
       pomodoroLength: 25,
       breakLength: 5,
-      autoStartBreaks: true
+      autoStartBreaks: true,
+      autoAdvanceEnabled: true
     },
     notifications: {
       studyReminders: true,
       taskDeadlines: true,
       achievements: true,
-      weeklyReport: false
+      weeklyReport: false,
+      notificationsEnabled: false,
+      notificationSound: true
     }
   },
-  isLoading: false
+  isLoading: false,
+  sessionNotes: [],
+  reminders: [],
+  focusMode: {
+    isOpen: false
+  }
 }
 
 function studyPlannerReducer(state: StudyPlannerState, action: StudyPlannerAction): StudyPlannerState {
