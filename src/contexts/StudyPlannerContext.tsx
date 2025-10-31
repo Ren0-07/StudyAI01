@@ -166,6 +166,13 @@ interface StudyPlannerState {
   settings: AppSettings
   currentPomodoroTask?: Task
   isLoading: boolean
+  sessionNotes: SessionNote[] // NEW: Notes from study sessions
+  reminders: Reminder[] // NEW: Scheduled reminders
+  focusMode: {
+    isOpen: boolean
+    studyEventId?: string
+    taskId?: string
+  }
 }
 
 type StudyPlannerAction =
