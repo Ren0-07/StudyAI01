@@ -688,6 +688,81 @@ export function StudyPlannerProvider({ children }: { children: ReactNode }) {
     }
   }, [user, state.userStats, state.isLoading])
 
+  // Auto-advance logic - check for missed events every 60 seconds
+  useEffect(() => {
+    if (!state.settings.studyPreferences.autoAdvanceEnabled) return
+
+    const checkInterval = setInterval(() => {
+      const now = new Date()
+
+      state.scheduleEvents.forEach((event) => {
+        if (event.status === 'in_progress' && event.endTime && !event.completedAt) {
+          const endTime = new Date(event.endTime)
+
+          // If event has passed without completion, mark as missed
+          if (endTime < now) {
+            const updatedEvent: ScheduleEvent = {
+              ...event,
+              status: 'missed',
+              missedCount: (event.missedCount || 0) + 1
+            }
+            dispatch({ type: 'UPDATE_SCHEDULE_EVENT', payload: updatedEvent })
+
+            // Update linked task if exists
+            if (event.taskId) {
+              const task = state.tasks.find((t) => t.id === event.taskId)
+              if (task) {
+                const updatedTask = { ...task, status: 'missed' as const, updatedAt: new Date().toISOString() }
+                dispatch({ type: 'UPDATE_TASK', payload: updatedTask })
+              }
+            }
+
+            // Sync to Supabase
+            if (user) {
+              dataSyncService.syncScheduleEvent(updatedEvent, user.id, 'update').catch(console.error)
+            }
+
+            // Find next scheduled event and auto-start if enabled
+            const nextEvent = state.scheduleEvents.find(
+              (e) => e.status === 'scheduled' && new Date(e.startTime) > new Date(event.endTime)
+            )
+
+            if (nextEvent) {
+              const autoStartEvent: ScheduleEvent = {
+                ...nextEvent,
+                status: 'in_progress',
+                startedAt: new Date().toISOString()
+              }
+              dispatch({ type: 'UPDATE_SCHEDULE_EVENT', payload: autoStartEvent })
+
+              // Update linked task
+              if (nextEvent.taskId) {
+                const nextTask = state.tasks.find((t) => t.id === nextEvent.taskId)
+                if (nextTask) {
+                  const updatedNextTask = { ...nextTask, status: 'in_progress' as const, updatedAt: new Date().toISOString() }
+                  dispatch({ type: 'UPDATE_TASK', payload: updatedNextTask })
+                }
+              }
+
+              // Open Focus Mode for auto-started event
+              dispatch({
+                type: 'OPEN_FOCUS_MODE',
+                payload: { studyEventId: nextEvent.id, taskId: nextEvent.taskId }
+              })
+
+              // Sync to Supabase
+              if (user) {
+                dataSyncService.syncScheduleEvent(autoStartEvent, user.id, 'update').catch(console.error)
+              }
+            }
+          }
+        }
+      })
+    }, 60000) // Check every 60 seconds
+
+    return () => clearInterval(checkInterval)
+  }, [state.settings.studyPreferences.autoAdvanceEnabled, state.scheduleEvents, state.tasks, user])
+
   // Task operations
   const addTask = (taskData: Omit<Task, 'id' | 'createdAt' | 'updatedAt' | 'pomodoroSessions' | 'flashcardsGenerated'>) => {
     const task: Task = {
