@@ -302,6 +302,50 @@ class DataSyncService {
     }
   }
 
+  // Session Notes
+  async syncSessionNote(note: SessionNote, userId: string, operation: 'insert' | 'update' | 'delete') {
+    try {
+      this.setSyncStatus('syncing');
+      const noteData = toSnakeCase({ ...note, user_id: userId });
+
+      if (operation === 'delete') {
+        await supabase.from('session_notes').delete().eq('id', note.id).eq('user_id', userId);
+      } else if (operation === 'insert') {
+        await supabase.from('session_notes').insert(noteData);
+      } else {
+        await supabase.from('session_notes').update(noteData).eq('id', note.id).eq('user_id', userId);
+      }
+
+      this.setSyncStatus('synced');
+    } catch (error) {
+      console.error('Error syncing session note:', error);
+      this.setSyncStatus('error');
+      throw error;
+    }
+  }
+
+  // Reminders
+  async syncReminder(reminder: Reminder, userId: string, operation: 'insert' | 'update' | 'delete') {
+    try {
+      this.setSyncStatus('syncing');
+      const reminderData = toSnakeCase({ ...reminder, user_id: userId });
+
+      if (operation === 'delete') {
+        await supabase.from('reminders').delete().eq('id', reminder.id).eq('user_id', userId);
+      } else if (operation === 'insert') {
+        await supabase.from('reminders').insert(reminderData);
+      } else {
+        await supabase.from('reminders').update(reminderData).eq('id', reminder.id).eq('user_id', userId);
+      }
+
+      this.setSyncStatus('synced');
+    } catch (error) {
+      console.error('Error syncing reminder:', error);
+      this.setSyncStatus('error');
+      throw error;
+    }
+  }
+
   // Real-time subscriptions
   subscribeToTasks(userId: string, callback: (payload: any) => void) {
     return supabase
