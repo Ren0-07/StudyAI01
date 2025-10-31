@@ -389,14 +389,157 @@ export function TaskModal({ isOpen, onClose, editingTaskId }: TaskModalProps) {
             />
           </div>
 
+          {/* Task Notes */}
+          <div>
+            <label className="text-sm font-medium text-muted-foreground mb-2 block">
+              Task Notes (Optional)
+            </label>
+            <Textarea
+              placeholder="Add notes to this task..."
+              maxLength={1000}
+              rows={3}
+              value={formData.notes}
+              onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
+            />
+            <p className="text-xs text-muted-foreground mt-1">
+              {(formData.notes || '').length}/1000 characters
+            </p>
+          </div>
+
+          {/* File Attachments */}
+          <div className="space-y-3">
+            <div>
+              <label className="text-sm font-medium text-muted-foreground mb-2 block">
+                Attach Files (Optional)
+              </label>
+              <div className="flex gap-2">
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  multiple
+                  onChange={handleFileSelect}
+                  disabled={uploading}
+                  className="hidden"
+                  accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.zip"
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={uploading}
+                  className="gap-2"
+                >
+                  <Upload size={16} />
+                  {uploading ? 'Uploading...' : 'Add Files'}
+                </Button>
+              </div>
+            </div>
+
+            {/* Upload Progress */}
+            {uploadProgress.length > 0 && (
+              <div className="space-y-2">
+                {uploadProgress.map((item) => (
+                  <div key={item.fileName} className="flex items-center gap-2">
+                    <span className="text-xs flex-1 truncate">{item.fileName}</span>
+                    <div className="w-20 h-2 bg-gray-200 rounded overflow-hidden">
+                      <div
+                        className="h-full bg-blue-600 transition-all"
+                        style={{ width: `${item.progress}%` }}
+                      />
+                    </div>
+                    <span className="text-xs text-muted-foreground">{item.progress}%</span>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Attached Files List */}
+            {attachedFiles.length > 0 && (
+              <div className="space-y-2">
+                <p className="text-sm font-medium text-muted-foreground">
+                  Attached Files ({attachedFiles.length})
+                </p>
+                {attachedFiles.map((material) => (
+                  <div key={material.id} className="flex items-center justify-between p-2 bg-muted rounded">
+                    <span className="text-sm truncate flex items-center gap-2">
+                      <FileText size={14} />
+                      {material.fileName}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveFile(material.id)}
+                      className="text-red-600 hover:text-red-800 p-1"
+                    >
+                      <X size={16} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Schedule Event */}
+          <div className="space-y-3 border-t pt-4">
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                id="schedule"
+                checked={scheduleEvent}
+                onChange={(e) => setScheduleEvent(e.target.checked)}
+                className="rounded cursor-pointer"
+              />
+              <label htmlFor="schedule" className="text-sm font-medium text-muted-foreground cursor-pointer">
+                Add to Schedule
+              </label>
+            </div>
+
+            {scheduleEvent && (
+              <div className="space-y-3 p-3 bg-blue-50 rounded border border-blue-200">
+                <div>
+                  <label className="text-sm font-medium text-muted-foreground mb-2 block">
+                    Session Start Time
+                  </label>
+                  <Input
+                    type="datetime-local"
+                    value={eventStartTime}
+                    onChange={(e) => setEventStartTime(e.target.value)}
+                    className="bg-white"
+                  />
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-muted-foreground mb-2 block">
+                    Duration (minutes)
+                  </label>
+                  <Input
+                    type="number"
+                    min={15}
+                    max={480}
+                    step={15}
+                    value={eventDuration}
+                    onChange={(e) => setEventDuration(parseInt(e.target.value))}
+                    className="bg-white"
+                  />
+                </div>
+                {eventStartTime && (
+                  <div className="text-xs text-muted-foreground bg-white p-2 rounded">
+                    <p>
+                      📅 Scheduled: {new Date(eventStartTime).toLocaleString()} →{' '}
+                      {new Date(new Date(eventStartTime).getTime() + eventDuration * 60000).toLocaleTimeString()}
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
           {/* Actions */}
           <div className="flex gap-3 pt-4 border-t">
             <Button variant="outline" onClick={onClose}>
               Cancel
             </Button>
-            <Button 
+            <Button
               onClick={handleSubmit}
-              disabled={!formData.title.trim()}
+              disabled={!formData.title.trim() || uploading}
               className="bg-gradient-to-r from-blue-600 to-purple-600 text-white"
             >
               {editingTaskId ? 'Update Task' : 'Create Task'}
