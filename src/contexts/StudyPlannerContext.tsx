@@ -499,6 +499,64 @@ function studyPlannerReducer(state: StudyPlannerState, action: StudyPlannerActio
     case 'LOAD_DATA':
       return { ...state, ...action.payload }
 
+    case 'ADD_SESSION_NOTE':
+      return {
+        ...state,
+        sessionNotes: [action.payload, ...state.sessionNotes]
+      }
+
+    case 'UPDATE_SESSION_NOTE':
+      return {
+        ...state,
+        sessionNotes: state.sessionNotes.map(note =>
+          note.id === action.payload.id ? action.payload : note
+        )
+      }
+
+    case 'DELETE_SESSION_NOTE':
+      return {
+        ...state,
+        sessionNotes: state.sessionNotes.filter(note => note.id !== action.payload)
+      }
+
+    case 'ADD_REMINDER':
+      return {
+        ...state,
+        reminders: [action.payload, ...state.reminders]
+      }
+
+    case 'UPDATE_REMINDER':
+      return {
+        ...state,
+        reminders: state.reminders.map(reminder =>
+          reminder.id === action.payload.id ? action.payload : reminder
+        )
+      }
+
+    case 'DELETE_REMINDER':
+      return {
+        ...state,
+        reminders: state.reminders.filter(reminder => reminder.id !== action.payload)
+      }
+
+    case 'OPEN_FOCUS_MODE':
+      return {
+        ...state,
+        focusMode: {
+          isOpen: true,
+          studyEventId: action.payload.studyEventId,
+          taskId: action.payload.taskId
+        }
+      }
+
+    case 'CLOSE_FOCUS_MODE':
+      return {
+        ...state,
+        focusMode: {
+          isOpen: false
+        }
+      }
+
     default:
       return state
   }
