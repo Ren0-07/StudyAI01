@@ -1,12 +1,14 @@
 import { supabase } from '@/lib/supabase';
-import type { 
-  Task, 
-  Material, 
-  Flashcard, 
-  FlashcardDeck, 
-  PomodoroSession, 
-  ScheduleEvent, 
-  UserStats 
+import type {
+  Task,
+  Material,
+  Flashcard,
+  FlashcardDeck,
+  PomodoroSession,
+  ScheduleEvent,
+  UserStats,
+  SessionNote,
+  Reminder
 } from '@/contexts/StudyPlannerContext';
 
 export type SyncStatus = 'idle' | 'syncing' | 'synced' | 'error';
