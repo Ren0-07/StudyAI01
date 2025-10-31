@@ -201,6 +201,14 @@ type StudyPlannerAction =
   | { type: 'UPDATE_USER_STATS'; payload: Partial<UserStats> }
   | { type: 'UPDATE_SETTINGS'; payload: Partial<AppSettings> }
   | { type: 'LOAD_DATA'; payload: Partial<StudyPlannerState> }
+  | { type: 'ADD_SESSION_NOTE'; payload: SessionNote }
+  | { type: 'UPDATE_SESSION_NOTE'; payload: SessionNote }
+  | { type: 'DELETE_SESSION_NOTE'; payload: string }
+  | { type: 'ADD_REMINDER'; payload: Reminder }
+  | { type: 'UPDATE_REMINDER'; payload: Reminder }
+  | { type: 'DELETE_REMINDER'; payload: string }
+  | { type: 'OPEN_FOCUS_MODE'; payload: { studyEventId: string; taskId?: string } }
+  | { type: 'CLOSE_FOCUS_MODE' }
 
 const initialState: StudyPlannerState = {
   tasks: [],
