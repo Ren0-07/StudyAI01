@@ -99,6 +99,26 @@ export interface Material {
   updatedAt: string
 }
 
+export interface SessionNote {
+  id: string
+  studyEventId: string
+  userId: string
+  content: string
+  createdAt: string
+  updatedAt: string
+}
+
+export interface Reminder {
+  id: string
+  userId: string
+  studyEventId: string
+  scheduledTime: string
+  reminderType: 'session_start' | 'before_10min' | 'before_30min' | 'daily_digest'
+  sentAt?: string
+  createdAt: string
+  updatedAt: string
+}
+
 export interface UserStats {
   totalTasks: number
   completedTasks: number
