@@ -77,6 +77,10 @@ export interface ScheduleEvent {
   type: 'task' | 'study' | 'break' | 'other'
   taskId?: string
   color?: string
+  status?: 'scheduled' | 'in_progress' | 'completed' | 'missed' // NEW: Event status tracking
+  missedCount?: number // NEW: Number of times marked missed
+  startedAt?: string // NEW: When user actually started
+  completedAt?: string // NEW: When marked complete
 }
 
 export interface Material {
