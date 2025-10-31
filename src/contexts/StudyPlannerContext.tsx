@@ -1003,6 +1003,200 @@ export function StudyPlannerProvider({ children }: { children: ReactNode }) {
     dispatch({ type: 'UPDATE_SETTINGS', payload: settings })
   }
 
+  // Session Note operations
+  const createSessionNote = (studyEventId: string, content: string) => {
+    const note: SessionNote = {
+      id: crypto.randomUUID(),
+      studyEventId,
+      userId: user?.id || '',
+      content,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    }
+    dispatch({ type: 'ADD_SESSION_NOTE', payload: note })
+
+    // Sync to Supabase
+    if (user) {
+      dataSyncService.syncSessionNote(note, user.id, 'insert').catch(console.error)
+    }
+  }
+
+  const updateSessionNote = (noteId: string, content: string) => {
+    const note = state.sessionNotes.find(n => n.id === noteId)
+    if (!note) return
+
+    const updatedNote: SessionNote = {
+      ...note,
+      content,
+      updatedAt: new Date().toISOString()
+    }
+    dispatch({ type: 'UPDATE_SESSION_NOTE', payload: updatedNote })
+
+    // Sync to Supabase
+    if (user) {
+      dataSyncService.syncSessionNote(updatedNote, user.id, 'update').catch(console.error)
+    }
+  }
+
+  const deleteSessionNote = (noteId: string) => {
+    const note = state.sessionNotes.find(n => n.id === noteId)
+    dispatch({ type: 'DELETE_SESSION_NOTE', payload: noteId })
+
+    // Sync to Supabase
+    if (user && note) {
+      dataSyncService.syncSessionNote(note, user.id, 'delete').catch(console.error)
+    }
+  }
+
+  const getSessionNotesByEvent = (studyEventId: string) =>
+    state.sessionNotes.filter(note => note.studyEventId === studyEventId)
+
+  // Reminder operations
+  const createReminder = (reminder: Omit<Reminder, 'id' | 'createdAt' | 'updatedAt'>) => {
+    const newReminder: Reminder = {
+      ...reminder,
+      id: crypto.randomUUID(),
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    }
+    dispatch({ type: 'ADD_REMINDER', payload: newReminder })
+
+    // Sync to Supabase
+    if (user) {
+      dataSyncService.syncReminder(newReminder, user.id, 'insert').catch(console.error)
+    }
+  }
+
+  const updateReminder = (reminder: Reminder) => {
+    const updatedReminder = {
+      ...reminder,
+      updatedAt: new Date().toISOString()
+    }
+    dispatch({ type: 'UPDATE_REMINDER', payload: updatedReminder })
+
+    // Sync to Supabase
+    if (user) {
+      dataSyncService.syncReminder(updatedReminder, user.id, 'update').catch(console.error)
+    }
+  }
+
+  const deleteReminder = (reminderId: string) => {
+    const reminder = state.reminders.find(r => r.id === reminderId)
+    dispatch({ type: 'DELETE_REMINDER', payload: reminderId })
+
+    // Sync to Supabase
+    if (user && reminder) {
+      dataSyncService.syncReminder(reminder, user.id, 'delete').catch(console.error)
+    }
+  }
+
+  const getRemindersByEvent = (studyEventId: string) =>
+    state.reminders.filter(reminder => reminder.studyEventId === studyEventId)
+
+  // Study Event operations
+  const startEvent = (studyEventId: string) => {
+    const event = state.scheduleEvents.find(e => e.id === studyEventId)
+    if (!event) return
+
+    const updatedEvent: ScheduleEvent = {
+      ...event,
+      status: 'in_progress',
+      startedAt: new Date().toISOString()
+    }
+    dispatch({ type: 'UPDATE_SCHEDULE_EVENT', payload: updatedEvent })
+
+    // Also update linked task status if exists
+    if (event.taskId) {
+      const task = state.tasks.find(t => t.id === event.taskId)
+      if (task) {
+        updateTask({ ...task, status: 'in_progress' })
+      }
+    }
+
+    // Sync to Supabase
+    if (user) {
+      dataSyncService.syncScheduleEvent(updatedEvent, user.id, 'update').catch(console.error)
+    }
+  }
+
+  const markEventComplete = (studyEventId: string) => {
+    const event = state.scheduleEvents.find(e => e.id === studyEventId)
+    if (!event) return
+
+    const updatedEvent: ScheduleEvent = {
+      ...event,
+      status: 'completed',
+      completedAt: new Date().toISOString()
+    }
+    dispatch({ type: 'UPDATE_SCHEDULE_EVENT', payload: updatedEvent })
+
+    // Also update linked task status if exists
+    if (event.taskId) {
+      const task = state.tasks.find(t => t.id === event.taskId)
+      if (task) {
+        updateTask({ ...task, status: 'completed', completed: true })
+      }
+    }
+
+    // Sync to Supabase
+    if (user) {
+      dataSyncService.syncScheduleEvent(updatedEvent, user.id, 'update').catch(console.error)
+    }
+  }
+
+  const markEventMissed = (studyEventId: string) => {
+    const event = state.scheduleEvents.find(e => e.id === studyEventId)
+    if (!event) return
+
+    const updatedEvent: ScheduleEvent = {
+      ...event,
+      status: 'missed',
+      missedCount: (event.missedCount || 0) + 1
+    }
+    dispatch({ type: 'UPDATE_SCHEDULE_EVENT', payload: updatedEvent })
+
+    // Also update linked task status if exists
+    if (event.taskId) {
+      const task = state.tasks.find(t => t.id === event.taskId)
+      if (task) {
+        updateTask({ ...task, status: 'missed' })
+      }
+    }
+
+    // Sync to Supabase
+    if (user) {
+      dataSyncService.syncScheduleEvent(updatedEvent, user.id, 'update').catch(console.error)
+    }
+  }
+
+  const skipToNextEvent = (currentEventId: string) => {
+    // Mark current event as missed
+    markEventMissed(currentEventId)
+
+    // Find next scheduled event
+    const currentEvent = state.scheduleEvents.find(e => e.id === currentEventId)
+    if (!currentEvent) return
+
+    const nextEvent = state.scheduleEvents.find(e =>
+      e.status === 'scheduled' &&
+      new Date(e.startTime) > new Date(currentEvent.endTime)
+    )
+
+    if (nextEvent && state.settings.studyPreferences.autoAdvanceEnabled) {
+      startEvent(nextEvent.id)
+      openFocusMode(nextEvent.id, nextEvent.taskId)
+    }
+  }
+
+  // Focus Mode operations
+  const openFocusMode = (studyEventId: string, taskId?: string) => {
+    dispatch({ type: 'OPEN_FOCUS_MODE', payload: { studyEventId, taskId } })
+  }
+
+  const closeFocusMode = () => {
+    dispatch({ type: 'CLOSE_FOCUS_MODE' })
+  }
+
   // Utility functions
   const getTaskById = (id: string) => state.tasks.find(task => task.id === id)
   const getFlashcardsByTask = (taskId: string) => state.flashcards.filter(card => card.taskId === taskId)
