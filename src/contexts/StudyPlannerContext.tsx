@@ -596,6 +596,24 @@ interface StudyPlannerContextType {
   deleteMaterial: (id: string) => void
   attachMaterialToTask: (materialId: string, taskId: string) => void
   detachMaterialFromTask: (materialId: string, taskId: string) => void
+  // Session Note operations
+  createSessionNote: (studyEventId: string, content: string) => void
+  updateSessionNote: (noteId: string, content: string) => void
+  deleteSessionNote: (noteId: string) => void
+  getSessionNotesByEvent: (studyEventId: string) => SessionNote[]
+  // Reminder operations
+  createReminder: (reminder: Omit<Reminder, 'id' | 'createdAt' | 'updatedAt'>) => void
+  updateReminder: (reminder: Reminder) => void
+  deleteReminder: (reminderId: string) => void
+  getRemindersByEvent: (studyEventId: string) => Reminder[]
+  // Study Event operations
+  startEvent: (studyEventId: string) => void
+  markEventComplete: (studyEventId: string) => void
+  markEventMissed: (studyEventId: string) => void
+  skipToNextEvent: (currentEventId: string) => void
+  // Focus Mode operations
+  openFocusMode: (studyEventId: string, taskId?: string) => void
+  closeFocusMode: () => void
   // Settings operations
   updateSettings: (settings: Partial<AppSettings>) => void
   // Utility functions
