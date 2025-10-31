@@ -7,15 +7,18 @@ import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
 import { useStudyPlanner } from '@/contexts/StudyPlannerContext'
-import { 
-  Plus, 
-  X, 
+import { storageService } from '@/services/storageService'
+import {
+  Plus,
+  X,
   Upload,
   FileText,
   Eye,
   Download,
   Trash2,
-  PaperclipIcon
+  PaperclipIcon,
+  Calendar,
+  Clock
 } from 'lucide-react'
 
 interface TaskModalProps {
@@ -25,16 +28,19 @@ interface TaskModalProps {
 }
 
 export function TaskModal({ isOpen, onClose, editingTaskId }: TaskModalProps) {
-  const { 
-    state, 
-    addTask, 
-    updateTask, 
-    getTaskById
+  const {
+    state,
+    addTask,
+    updateTask,
+    getTaskById,
+    addMaterial,
+    addScheduleEvent
   } = useStudyPlanner()
-  
+
   const [formData, setFormData] = useState<{
     title: string
     description: string
+    notes: string
     priority: 'low' | 'medium' | 'high' | 'urgent'
     difficulty: 'easy' | 'medium' | 'hard'
     subject: string
@@ -45,6 +51,7 @@ export function TaskModal({ isOpen, onClose, editingTaskId }: TaskModalProps) {
   }>({
     title: '',
     description: '',
+    notes: '',
     priority: 'medium',
     difficulty: 'medium',
     subject: '',
@@ -53,6 +60,14 @@ export function TaskModal({ isOpen, onClose, editingTaskId }: TaskModalProps) {
     estimate: '',
     reminder: ''
   })
+
+  const [attachedFiles, setAttachedFiles] = useState<any[]>([])
+  const [uploading, setUploading] = useState(false)
+  const [uploadProgress, setUploadProgress] = useState<{ fileName: string; progress: number }[]>([])
+  const [scheduleEvent, setScheduleEvent] = useState(false)
+  const [eventStartTime, setEventStartTime] = useState('')
+  const [eventDuration, setEventDuration] = useState(60)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     // Only reset form when modal opens/closes or when explicitly editing a different task
