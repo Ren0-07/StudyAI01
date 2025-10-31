@@ -78,6 +78,7 @@ export function TaskModal({ isOpen, onClose, editingTaskId }: TaskModalProps) {
           setFormData({
             title: task.title,
             description: task.description || '',
+            notes: task.notes || '',
             priority: task.priority,
             difficulty: task.difficulty || 'medium',
             subject: task.subject || '',
@@ -92,6 +93,7 @@ export function TaskModal({ isOpen, onClose, editingTaskId }: TaskModalProps) {
         setFormData({
           title: '',
           description: '',
+          notes: '',
           priority: 'medium',
           difficulty: 'medium',
           subject: '',
@@ -101,11 +103,16 @@ export function TaskModal({ isOpen, onClose, editingTaskId }: TaskModalProps) {
           reminder: ''
         })
       }
+      setAttachedFiles([])
+      setScheduleEvent(false)
+      setEventStartTime('')
+      setEventDuration(60)
     } else {
       // Reset everything when modal closes
       setFormData({
         title: '',
         description: '',
+        notes: '',
         priority: 'medium',
         difficulty: 'medium',
         subject: '',
@@ -114,6 +121,8 @@ export function TaskModal({ isOpen, onClose, editingTaskId }: TaskModalProps) {
         estimate: '',
         reminder: ''
       })
+      setAttachedFiles([])
+      setScheduleEvent(false)
     }
   }, [isOpen, editingTaskId, getTaskById])
 
