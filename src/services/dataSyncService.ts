@@ -109,6 +109,8 @@ class DataSyncService {
         pomodoroSessionsResult,
         scheduleEventsResult,
         userStatsResult,
+        sessionNotesResult,
+        remindersResult,
       ] = await Promise.all([
         supabase.from('tasks').select('*').eq('user_id', userId),
         supabase.from('materials').select('*').eq('user_id', userId),
@@ -117,6 +119,8 @@ class DataSyncService {
         supabase.from('pomodoro_sessions').select('*').eq('user_id', userId),
         supabase.from('schedule_events').select('*').eq('user_id', userId),
         supabase.from('user_stats').select('*').eq('user_id', userId).single(),
+        supabase.from('session_notes').select('*').eq('user_id', userId),
+        supabase.from('reminders').select('*').eq('user_id', userId),
       ]);
 
       this.setSyncStatus('synced');
@@ -137,6 +141,8 @@ class DataSyncService {
           xp: 0,
           xpToNextLevel: 100,
         },
+        sessionNotes: toCamelCase(sessionNotesResult.data || []),
+        reminders: toCamelCase(remindersResult.data || []),
       };
     } catch (error) {
       console.error('Error fetching user data:', error);
