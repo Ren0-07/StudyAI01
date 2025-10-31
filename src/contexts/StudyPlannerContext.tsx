@@ -22,6 +22,8 @@ export interface Task {
   pomodoroSessions: number
   flashcardsGenerated: boolean
   materialIds?: string[] // Materials attached to this task
+  notes?: string // NEW: Editable notes attached to the task
+  status?: 'pending' | 'in_progress' | 'completed' | 'missed' // NEW: Task status for workflow
 }
 
 export interface Flashcard {
