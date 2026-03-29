@@ -192,12 +192,12 @@ Simply connect the GitHub repo to Vercel, add the environment variables, and dep
 
 ## 👥 Team
 
-Built by **Kishan Prajapati** and team for the **Inspiron 5.0 Hackathon**.
+Built by **Kishan Prajapati** .
 
 ---
 
 <p align="center">
   Made with ❤️ and ☕ by the Aivy team
 </p>
-</CodeContent>
-<parameter name="EmptyFile">false
+
+
